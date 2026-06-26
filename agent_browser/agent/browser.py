@@ -5,14 +5,15 @@ from playwright.async_api import async_playwright, Page
 
 
 class Browser:
-    def __init__(self) -> None:
+    def __init__(self, headless: bool = False) -> None:
+        self._headless = headless
         self._pw = None
         self._browser = None
         self._page: Page | None = None
 
     async def start(self) -> None:
         self._pw = await async_playwright().start()
-        self._browser = await self._pw.chromium.launch(headless=False)
+        self._browser = await self._pw.chromium.launch(headless=self._headless)
         self._page = await self._browser.new_page()
 
     async def stop(self) -> None:

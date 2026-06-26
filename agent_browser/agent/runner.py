@@ -1,54 +1,93 @@
 import json
 import os
+from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Any
 
 from agent.browser import Browser
-from agent.prompts import SYSTEM_PROMPT
+from agent.prompts import build_system_prompt
 from agent.tools import TOOLS_OPENAI, TOOLS_ANTHROPIC, call_tool
 from agent.writer import write_generated_files
 
 
-def _default_model(provider: str) -> str:
-    if m := os.getenv("LLM_MODEL"):
-        return m
-    return {"openai": "gpt-4o", "claude": "claude-sonnet-4-6", "ollama": "llama3.2"}[provider]
+@dataclass
+class TaskConfig:
+    prompt: str
+    url: str = ""
+    user: str = ""
+    password: str = ""
+    provider: str = "openai"
+    model: str = ""
+    headless: bool = False
+    output_dir: Path = field(default_factory=Path)
+    extra_context: str = ""
+
+    def effective_model(self) -> str:
+        if self.model:
+            return self.model
+        return {"openai": "gpt-4o", "claude": "claude-sonnet-4-6", "ollama": "llama3.2"}.get(
+            self.provider, "gpt-4o"
+        )
+
+    def full_prompt(self) -> str:
+        parts = [self.prompt]
+        if self.url:
+            parts.append(f"URL base: {self.url}")
+        if self.user:
+            parts.append(f"Usuário: {self.user}")
+        if self.password:
+            parts.append(f"Senha: {self.password}")
+        if self.extra_context:
+            parts.append(f"Contexto adicional: {self.extra_context}")
+        return "\n".join(parts)
 
 
-async def run_agent(prompt: str, provider: str) -> None:
-    model = _default_model(provider)
-    print(f"Provedor : {provider}")
+async def run_agent(config: TaskConfig) -> None:
+    model = config.effective_model()
+    system_prompt = build_system_prompt(config)
+
+    print(f"Provedor : {config.provider}")
     print(f"Modelo   : {model}")
-    print(f"Prompt   : {prompt}\n")
+    print(f"URL      : {config.url or '(não informada)'}")
+    print(f"Headless : {config.headless}")
+    print(f"Saída    : {config.output_dir.resolve()}")
+    print(f"Prompt   : {config.prompt}\n")
 
-    browser = Browser()
+    browser = Browser(headless=config.headless)
     await browser.start()
     try:
-        if provider in ("openai", "ollama"):
+        if config.provider in ("openai", "ollama"):
             from openai import OpenAI
-            if provider == "openai":
+
+            if config.provider == "openai":
                 client = OpenAI(api_key=os.environ["OPENAI_API_KEY"])
             else:
                 client = OpenAI(
                     base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434/v1"),
                     api_key="ollama",
                 )
-            await _run_openai_compat(client, model, prompt, browser)
+            await _run_openai_compat(client, model, config, system_prompt, browser)
 
-        elif provider == "claude":
+        elif config.provider == "claude":
             from anthropic import Anthropic
+
             client = Anthropic()
-            await _run_anthropic(client, model, prompt, browser)
+            await _run_anthropic(client, model, config, system_prompt, browser)
 
         else:
-            raise ValueError(f"Provedor desconhecido: '{provider}'. Use: openai, claude ou ollama")
+            raise ValueError(
+                f"Provedor desconhecido: '{config.provider}'. Use: openai, claude ou ollama"
+            )
     finally:
         await browser.stop()
 
 
-async def _run_openai_compat(client: Any, model: str, prompt: str, browser: Browser) -> None:
+async def _run_openai_compat(
+    client: Any, model: str, config: TaskConfig, system_prompt: str, browser: Browser
+) -> None:
     messages: list[dict] = [
-        {"role": "system", "content": SYSTEM_PROMPT},
-        {"role": "user", "content": prompt},
+        {"role": "system", "content": system_prompt},
+        {"role": "user", "content": config.full_prompt()},
     ]
     while True:
         response = client.chat.completions.create(
@@ -62,7 +101,7 @@ async def _run_openai_compat(client: Any, model: str, prompt: str, browser: Brow
         if choice.finish_reason == "stop":
             text = choice.message.content or ""
             print(text)
-            write_generated_files(text)
+            write_generated_files(text, config.output_dir)
             break
 
         if choice.finish_reason == "tool_calls":
@@ -74,13 +113,15 @@ async def _run_openai_compat(client: Any, model: str, prompt: str, browser: Brow
                 messages.append({"role": "tool", "tool_call_id": tc.id, "content": result})
 
 
-async def _run_anthropic(client: Any, model: str, prompt: str, browser: Browser) -> None:
-    messages: list[dict] = [{"role": "user", "content": prompt}]
+async def _run_anthropic(
+    client: Any, model: str, config: TaskConfig, system_prompt: str, browser: Browser
+) -> None:
+    messages: list[dict] = [{"role": "user", "content": config.full_prompt()}]
     while True:
         response = client.messages.create(
             model=model,
             max_tokens=8096,
-            system=SYSTEM_PROMPT,
+            system=system_prompt,
             tools=TOOLS_ANTHROPIC,
             messages=messages,
         )
@@ -88,7 +129,7 @@ async def _run_anthropic(client: Any, model: str, prompt: str, browser: Browser)
             for block in response.content:
                 if hasattr(block, "text"):
                     print(block.text)
-                    write_generated_files(block.text)
+                    write_generated_files(block.text, config.output_dir)
             break
 
         if response.stop_reason == "tool_use":
