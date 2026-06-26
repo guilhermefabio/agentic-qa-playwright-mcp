@@ -1,4 +1,4 @@
-# auditoria-tests
+# agent_browser
 
 AI-powered Playwright test generator. Describe a user flow in plain text and the agent navigates a real browser, inspects the actual DOM, and generates Page Object Model files + pytest tests automatically.
 
@@ -17,7 +17,7 @@ The agent will:
 ## Project structure
 
 ```
-auditoria-tests/
+agent_browser/
 ├── main.py              # CLI entry point
 ├── agent/
 │   ├── browser.py       # Browser actions (navigate, click, fill, snapshot…)
@@ -32,6 +32,7 @@ auditoria-tests/
 ## Setup
 
 ```bash
+cd agent_browser
 python -m venv .venv
 .venv\Scripts\activate        # Windows
 pip install -r requirements.txt

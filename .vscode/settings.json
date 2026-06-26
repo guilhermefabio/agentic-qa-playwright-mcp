@@ -1,6 +1,6 @@
 {
     "python.testing.pytestArgs": [
-        "auditoria-tests"
+        "agent_browser"
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.pytestEnabled": true
