@@ -1,0 +1,22 @@
+# Ambiente e credenciais
+.env
+*.env.local
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+env/
+*.egg-info/
+dist/
+build/
+
+# Playwright
+test-results/
+playwright-report/
+
+# VS Code
+.vscode/settings.json
