@@ -1,9 +1,9 @@
-# MCP PlayWright
+# agentic-qa-playwright-mcp
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.12%2B-blue)](https://www.python.org/)
 [![Playwright](https://img.shields.io/badge/Playwright-Chromium-green)](https://playwright.dev/)
-[![Lint](https://github.com/seu-usuario/MCP_PlayWright/actions/workflows/lint.yml/badge.svg)](https://github.com/seu-usuario/MCP_PlayWright/actions/workflows/lint.yml)
+[![Lint](https://github.com/guilhermefabio/agentic-qa-playwright-mcp/actions/workflows/lint.yml/badge.svg)](https://github.com/guilhermefabio/agentic-qa-playwright-mcp/actions/workflows/lint.yml)
 
 AI-powered browser automation framework that generates complete Playwright test suites — Page Object Model + pytest — from plain-text prompts. Supports OpenAI, Anthropic Claude and Ollama out of the box.
 
@@ -123,7 +123,7 @@ flowchart TD
 ## Repository structure
 
 ```
-MCP_PlayWright/
+agentic-qa-playwright-mcp/
 ├── .github/
 │   └── workflows/
 │       └── lint.yml            # CI: ruff + mypy + pip-audit on push/PR

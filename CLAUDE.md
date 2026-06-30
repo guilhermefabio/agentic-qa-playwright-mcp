@@ -1,4 +1,4 @@
-# MCP PlayWright — Codebase Guide
+# agentic-qa-playwright-mcp — Codebase Guide
 
 AI-powered Playwright test generator. Describe a user flow in plain text; the agent opens a real Chromium browser, inspects the live DOM, and writes Page Object Model classes + pytest tests automatically.
 

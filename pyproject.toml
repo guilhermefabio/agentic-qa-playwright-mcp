@@ -1,5 +1,5 @@
 [project]
-name = "mcp-playwright"
+name = "agentic-qa-playwright-mcp"
 version = "0.1.0"
 description = "AI-powered Playwright test generator — describe a user flow in plain text and get Page Object Model + pytest files"
 readme = "README.md"
@@ -26,7 +26,7 @@ dependencies = [
 ]
 
 [project.scripts]
-mcp-playwright = "agent_browser.main:main"
+agentic-qa = "agent_browser.main:main"
 
 [tool.ruff]
 target-version = "py312"
