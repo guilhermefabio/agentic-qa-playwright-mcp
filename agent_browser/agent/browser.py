@@ -30,9 +30,15 @@ class Browser:
         self._console_messages: list[dict] = []
 
     @property
+    def _p(self) -> Page:
+        """Active page — raises if browser not started yet."""
+        assert self._page is not None, "Browser not started — call start() first"
+        return self._page
+
+    @property
     def _ctx(self) -> Page | Frame:
-        """Returns the active frame if one is selected, otherwise the main page."""
-        return self._active_frame if self._active_frame is not None else self._page
+        """Active frame if one is selected, otherwise the main page."""
+        return self._active_frame if self._active_frame is not None else self._p
 
     async def start(self) -> None:
         self._pw = await async_playwright().start()
@@ -54,28 +60,28 @@ class Browser:
     # ── Navigation ──────────────────────────────────────────────────────────
 
     async def navigate(self, url: str) -> str:
-        await self._page.goto(url, wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
-        return f"Página: {await self._page.title()} | URL: {self._page.url}"
+        await self._p.goto(url, wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
+        return f"Página: {await self._p.title()} | URL: {self._p.url}"
 
     async def navigate_back(self) -> str:
-        await self._page.go_back(wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
-        return f"Voltou para: {await self._page.title()} | URL: {self._page.url}"
+        await self._p.go_back(wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
+        return f"Voltou para: {await self._p.title()} | URL: {self._p.url}"
 
     async def navigate_forward(self) -> str:
-        await self._page.go_forward(wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
-        return f"Avançou para: {await self._page.title()} | URL: {self._page.url}"
+        await self._p.go_forward(wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
+        return f"Avançou para: {await self._p.title()} | URL: {self._p.url}"
 
     async def reload(self) -> str:
-        await self._page.reload(wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
-        return f"Recarregou: {await self._page.title()} | URL: {self._page.url}"
+        await self._p.reload(wait_until="networkidle", timeout=_TIMEOUT_NAVIGATE)
+        return f"Recarregou: {await self._p.title()} | URL: {self._p.url}"
 
     async def get_url(self) -> str:
-        return self._page.url
+        return self._p.url
 
     # ── Snapshot / inspection ────────────────────────────────────────────────
 
     async def snapshot(self) -> str:
-        tree = await self._page.accessibility.snapshot()
+        tree = await self._p.accessibility.snapshot()  # type: ignore[attr-defined]
         return json.dumps(tree, indent=2, ensure_ascii=False)[:_SNAPSHOT_LIMIT]
 
     async def get_inputs(self) -> str:
@@ -111,7 +117,7 @@ class Browser:
 
     async def get_frames(self) -> str:
         frames = []
-        for i, frame in enumerate(self._page.frames):
+        for i, frame in enumerate(self._p.frames):
             frames.append(
                 {
                     "index": i,
@@ -125,7 +131,7 @@ class Browser:
     async def switch_frame(
         self, index: int | None = None, name: str | None = None, url_contains: str | None = None
     ) -> str:
-        frames = self._page.frames
+        frames = self._p.frames
         if index is not None:
             if index < 0 or index >= len(frames):
                 return f"Frame {index} não encontrado. Total de frames: {len(frames)}"
@@ -146,14 +152,14 @@ class Browser:
 
     async def switch_main_frame(self) -> str:
         self._active_frame = None
-        return f"Voltou ao frame principal | Página: {await self._page.title()}"
+        return f"Voltou ao frame principal | Página: {await self._p.title()}"
 
     # ── Interaction ──────────────────────────────────────────────────────────
 
     async def click(self, selector: str) -> str:
         await self._ctx.locator(selector).first.click(timeout=_TIMEOUT_CLICK)
-        await self._page.wait_for_load_state("networkidle", timeout=_TIMEOUT_LOAD)
-        return f"Clicou: {selector} | Página: {await self._page.title()}"
+        await self._p.wait_for_load_state("networkidle", timeout=_TIMEOUT_LOAD)
+        return f"Clicou: {selector} | Página: {await self._p.title()}"
 
     async def fill(self, selector: str, value: str) -> str:
         loc = self._ctx.locator(selector).first
@@ -200,9 +206,9 @@ class Browser:
         return f"Desmarcou (uncheck): {selector}"
 
     async def press_key(self, key: str) -> str:
-        await self._page.keyboard.press(key)
-        await self._page.wait_for_load_state("networkidle", timeout=_TIMEOUT_LOAD)
-        return f"Pressionou: {key} | Página: {await self._page.title()}"
+        await self._p.keyboard.press(key)
+        await self._p.wait_for_load_state("networkidle", timeout=_TIMEOUT_LOAD)
+        return f"Pressionou: {key} | Página: {await self._p.title()}"
 
     async def hover(self, selector: str) -> str:
         await self._ctx.locator(selector).first.hover(timeout=_TIMEOUT_CLICK)
@@ -213,7 +219,7 @@ class Browser:
         return f"Selecionou '{value}' em: {selector}"
 
     async def drag(self, source_selector: str, target_selector: str) -> str:
-        await self._page.drag_and_drop(source_selector, target_selector, timeout=_TIMEOUT_CLICK)
+        await self._p.drag_and_drop(source_selector, target_selector, timeout=_TIMEOUT_CLICK)
         return f"Arrastou de '{source_selector}' para '{target_selector}'"
 
     async def file_upload(self, selector: str, paths: list[str]) -> str:
@@ -226,7 +232,7 @@ class Browser:
             return f"Rolou até elemento: {selector}"
         delta_x = amount if direction == "right" else (-amount if direction == "left" else 0)
         delta_y = amount if direction == "down" else (-amount if direction == "up" else 0)
-        await self._page.mouse.wheel(delta_x, delta_y)
+        await self._p.mouse.wheel(delta_x, delta_y)
         return f"Rolou {direction} {amount}px"
 
     # ── JavaScript ───────────────────────────────────────────────────────────
@@ -246,14 +252,14 @@ class Browser:
             else:
                 await dialog.dismiss()
 
-        self._page.once("dialog", _handler)
+        self._p.once("dialog", _handler)
         action = "aceitar" if accept else "recusar"
         return f"Handler de diálogo configurado para {action}"
 
     # ── Screenshot ───────────────────────────────────────────────────────────
 
     async def take_screenshot(self, path: str = "screenshot.png", full_page: bool = False) -> str:
-        await self._page.screenshot(path=path, full_page=full_page)
+        await self._p.screenshot(path=path, full_page=full_page)
         return f"Screenshot salvo em: {path}"
 
     # ── Misc ─────────────────────────────────────────────────────────────────
@@ -263,5 +269,5 @@ class Browser:
         return f"Aguardou {milliseconds}ms"
 
     async def resize(self, width: int, height: int) -> str:
-        await self._page.set_viewport_size({"width": width, "height": height})
+        await self._p.set_viewport_size({"width": width, "height": height})
         return f"Viewport redimensionado para {width}x{height}"
