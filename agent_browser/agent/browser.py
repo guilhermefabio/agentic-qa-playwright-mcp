@@ -75,7 +75,7 @@ class Browser:
     # ── Snapshot / inspection ────────────────────────────────────────────────
 
     async def snapshot(self) -> str:
-        tree = await self._ctx.accessibility.snapshot()
+        tree = await self._page.accessibility.snapshot()
         return json.dumps(tree, indent=2, ensure_ascii=False)[:_SNAPSHOT_LIMIT]
 
     async def get_inputs(self) -> str:
