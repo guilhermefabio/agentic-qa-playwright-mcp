@@ -31,8 +31,8 @@ repos:
         name: pip-audit (dependency vulnerability scan)
         language: python
         entry: pip-audit
-        args: [--requirement, agent_browser/requirements.txt, --skip-editable]
+        args: [--requirement, requirements.txt, --skip-editable]
         pass_filenames: false
         always_run: false
-        files: ^agent_browser/requirements\.txt$
+        files: ^requirements\.txt$
         additional_dependencies: [pip-audit]

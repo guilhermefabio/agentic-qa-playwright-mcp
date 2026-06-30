@@ -56,8 +56,17 @@ ignore_missing_imports = true
 no_strict_optional = true
 files = ["agent_browser"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "--browser chromium -v --tb=short"
+filterwarnings = ["ignore::DeprecationWarning"]
+
 [tool.pip-audit]
-requirement = "agent_browser/requirements.txt"
+requirement = "requirements.txt"
 
 [dependency-groups]
 dev = [
