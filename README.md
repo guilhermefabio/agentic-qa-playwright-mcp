@@ -9,7 +9,7 @@ AI-powered browser automation framework that generates complete Playwright test 
 
 ---
 
-## Table of Contents
+## Table of Contents:
 
 - [Overview](#overview)
 - [How it works](#how-it-works)
