@@ -27,9 +27,21 @@ AI-powered browser automation framework that generates complete Playwright test 
 
 ---
 
-## How it works 
+## Overview
 
-> This section explains the project in simple terms with analogies and illustrations. If you are already familiar with the technical side, jump straight to [Overview](#overview).
+Describe a user flow in natural language. The agent:
+
+1. Opens a **real Chromium browser** (visible or headless)
+2. Navigates to your application
+3. Inspects the **live DOM** — field ids, names, labels, roles — before touching anything
+4. Executes the flow step-by-step, taking accessibility snapshots after each action
+5. Writes **Page Object Model classes** + **pytest test files** based on what it actually found
+
+No manual selector hunting. No brittle CSS hardcoding.
+
+---
+
+## How it works
 
 ### The analogy: an AI assistant that learns to test websites
 
@@ -177,22 +189,6 @@ What happens behind the scenes:
 | **Tool call** | The AI "asks" the system to perform an action in the browser (click, fill, snapshot) |
 
 ---
-
-## Overview
-
-Describe a user flow in natural language. The agent:
-
-1. Opens a **real Chromium browser** (visible or headless)
-2. Navigates to your application
-3. Inspects the **live DOM** — field ids, names, labels, roles — before touching anything
-4. Executes the flow step-by-step, taking accessibility snapshots after each action
-5. Writes **Page Object Model classes** + **pytest test files** based on what it actually found
-
-No manual selector hunting. No brittle CSS hardcoding.
-
----
-
-## How it works
 
 ### Agent execution loop
 
